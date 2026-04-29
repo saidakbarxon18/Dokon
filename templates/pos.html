@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% block title %} Savdo Kassasi {% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="row h-100">
+    <!-- CHAP: MAHSULOTLAR -->
+    <div class="col-lg-8">
+        <div class="input-group mb-3 shadow-sm rounded-3 overflow-hidden">
+            <span class="input-group-text bg-white border-0 ps-3"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" id="searchInput" class="form-control border-0 p-3" placeholder="Mahsulot qidirish...">
+        </div>
+        <div class="row g-3" id="productsGrid" style="max-height: 80vh; overflow-y: auto; padding-bottom: 50px;">
+            {% for p in products %}
+            <div class="col-lg-3 col-md-4 col-sm-6 col-6 product-item" data-name="{{ p.name.lower() }}">
+                <!-- DIQQAT: onclick funksiyasiga p.quantity (max) qo'shildi -->
+                <div class="card-custom p-2 text-center h-100 position-relative"
+                     onclick="addToCart({{ p.id }}, '{{ p.name }}', {{ p.sell_price }}, '{{ p.currency }}', '{{ p.image }}', {{ p.quantity }})"
+                     style="cursor:pointer;">
+
+                    <div class="badge {{ 'bg-success' if p.currency=='USD' else 'bg-primary' }} position-absolute top-0 end-0 m-2" style="font-size: 10px;">{{ p.currency }}</div>
+
+                    <div style="height: 100px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                        {% if p.image %}
+                            <img src="/static/uploads/{{ p.image }}" loading="lazy" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        {% else %}
+                            <i class="fas fa-box fa-2x text-light"></i>
+                        {% endif %}
+                    </div>
+                    <h6 class="text-truncate fw-bold mb-1" style="font-size: 14px;">{{ p.name }}</h6>
+                    <div class="fw-bold {{ 'text-success' if p.currency=='USD' else 'text-dark' }}" style="font-size: 15px;">
+                        {% if p.currency == 'USD' %}
+                            $ {{ "{:,.2f}".format(p.sell_price) }}
+                        {% else %}
+                            {{ "{:,.0f}".format(p.sell_price) }}
+                        {% endif %}
+                    </div>
+                    <small class="text-muted" style="font-size: 11px;">Qoldiq: <span id="stock-{{ p.id }}">{{ p.quantity }}</span></small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- O'NG: SAVAT -->
+    <div class="col-lg-4">
+        <div class="card-custom d-flex flex-column h-100 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center pb-2 mb-2">
+                <h5 class="fw-bold m-0">Savat <i class="fas fa-shopping-cart text-primary"></i></h5>
+                <button class="btn btn-sm btn-outline-danger" onclick="cart={}; renderCart();"><i class="fas fa-trash"></i></button>
+            </div>
+            <div id="cartItems" class="flex-grow-1 overflow-auto pe-1"></div>
+
+            <div class="border-top pt-3 mt-auto">
+                <div class="d-flex justify-content-between mb-2 align-items-end" id="total-uzs-row" style="display: none;">
+                    <span class="fw-bold">Jami (SO'M):</span>
+                    <h4 class="fw-bold m-0" id="totalUZS">0 so'm</h4>
+                </div>
+                <div class="d-flex justify-content-between mb-3 align-items-end" id="total-usd-row" style="display: none;">
+                    <span class="fw-bold">Jami (USD):</span>
+                    <h4 class="fw-bold m-0 text-success" id="totalUSD">$ 0.00</h4>
+                </div>
+
+                <button class="btn btn-primary w-100 py-3 fw-bold" onclick="sell()">SOTISH</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let cart = {};
+
+    // 1. SAVATGA QO'SHISH (TEKSHIRUV BILAN)
+    function addToCart(id, name, price, currency, image, maxQty) {
+        if (cart[id]) {
+            if (cart[id].qty + 1 > maxQty) {
+                // Agar ombordan oshib ketsa
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+                Toast.fire({ icon: 'warning', title: `Omborda faqat ${maxQty} ta bor!` });
+                return;
+            }
+            cart[id].qty++;
+        } else {
+            // Birinchi marta qo'shilganda
+            if (1 > maxQty) {
+                Swal.fire('Diqqat', 'Bu mahsulot tugagan!', 'error');
+                return;
+            }
+            cart[id] = {id, name, price, currency, image, qty: 1, maxQty};
+        }
+        renderCart();
+    }
+
+    // 2. SONINI O'ZGARTIRISH (TEKSHIRUV BILAN)
+    function updateQty(id, value) {
+        let newQty = parseInt(value);
+        let maxQty = cart[id].maxQty;
+
+        if (newQty > maxQty) {
+            alert(`Maksimum: ${maxQty} dona bor!`);
+            cart[id].qty = maxQty; // Qaytarib joyiga qo'yish
+        } else if (newQty > 0) {
+            cart[id].qty = newQty;
+        } else {
+            delete cart[id];
+        }
+        renderCart();
+    }
+
+    function renderCart() {
+        let html = '';
+        let totalUZS = 0, totalUSD = 0;
+
+        for (let id in cart) {
+            let item = cart[id];
+            let itemTotal = item.price * item.qty;
+
+            if (item.currency === 'USD') {
+                totalUSD += itemTotal;
+                item.displayTotal = `$ ${itemTotal.toFixed(2)}`;
+            } else {
+                totalUZS += itemTotal;
+                item.displayTotal = `${itemTotal.toLocaleString()} so'm`;
+            }
+
+            html += `<div class="d-flex align-items-center mb-2 p-2 bg-light rounded">
+                <div class="flex-grow-1">
+                    <b class="d-block text-dark">${item.name}</b>
+                    <small class="text-muted">${item.displayTotal}</small>
+                </div>
+                <!-- Inputga max qiymat qo'shildi -->
+                <input type="number" class="form-control form-control-sm text-center mx-2 fw-bold"
+                       value="${item.qty}" max="${item.maxQty}" min="1"
+                       onchange="updateQty(${id}, this.value)" style="width: 60px;">
+
+                <button class="btn btn-sm text-danger" onclick="delete cart[${id}]; renderCart();"><i class="fas fa-times-circle fs-5"></i></button>
+            </div>`;
+        }
+
+        document.getElementById('cartItems').innerHTML = html || `<p class="text-center text-muted mt-5">Savat bo'sh</p>`;
+
+        document.getElementById('totalUZS').innerText = `${totalUZS.toLocaleString()} so'm`;
+        document.getElementById('totalUSD').innerText = `$ ${totalUSD.toFixed(2)}`;
+
+        document.getElementById('total-uzs-row').style.display = totalUZS > 0 ? 'flex' : 'none';
+        document.getElementById('total-usd-row').style.display = totalUSD > 0 ? 'flex' : 'none';
+    }
+
+    function sell() {
+        if (Object.keys(cart).length === 0) return alert("Savat bo'sh!");
+
+        Swal.fire({
+            title: 'Sotishni tasdiqlaysizmi?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            confirmButtonText: 'Ha, sotilsin!',
+            cancelButtonText: 'Yo\'q'
+        }).then(result => {
+            if (result.isConfirmed) {
+                fetch('/api/sell', {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({cart: Object.values(cart)})
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if(d.success) {
+                        // --- O'ZGARTIRILGAN QISM (AVTO-YOPILISH) ---
+                        Swal.fire({
+                            position: 'center',
+                            icon: 'success',
+                            title: 'Sotildi!',
+                            showConfirmButton: false, // "OK" tugmasini olib tashladik
+                            timer: 1100 // 1.5 soniyadan keyin o'zi yopiladi
+                        }).then(() => {
+                            location.reload(); // Sahifa yangilanadi
+                        });
+                        // --------------------------------------------
+                    } else {
+                        Swal.fire('Xatolik!', d.message, 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    document.getElementById('searchInput').addEventListener('keyup', e => {
+        let val = e.target.value.toLowerCase();
+        document.querySelectorAll('.product-item').forEach(item => {
+            item.style.display = item.dataset.name.includes(val) ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}

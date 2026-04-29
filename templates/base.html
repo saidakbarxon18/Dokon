@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- SAYT NOMI O'ZGARTIRILDI -->
+    <title>BEK SANTEXNIKA</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Ikonkalar -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter shrifti) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #10b981;       /* Yashil */
+            --primary-hover: #059669;       /* To'q yashil */
+            --sidebar-bg: #111827;          /* Qora menyu */
+            --bg-body: #f3f4f6;             /* Kulrang fon */
+            --text-dark: #1f2937;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* --- SIDEBAR (Chap Menyu) --- */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background-color: var(--sidebar-bg);
+            color: #9ca3af;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            z-index: 1050;
+            transition: all 0.3s;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 800; /* Qalinroq */
+            color: #fff;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-link {
+            color: #d1d5db;
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        /* --- ASOSIY SAHIFA (Main) --- */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            transition: 0.3s;
+        }
+
+        /* --- HEADER & DROPDOWN (Tepa qism) --- */
+        .header-dropdown {
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+        .header-dropdown:hover {
+            background-color: #f9fafb !important;
+            border-color: #d1d5db;
+        }
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* --- KARTALAR VA TUGMALAR --- */
+        .card-custom {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: none;
+            height: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* --- MOBIL MOSLASHUV --- */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 15px; }
+            .mobile-header { display: flex !important; }
+            .desktop-header { display: none !important; }
+        }
+
+        .mobile-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+<!-- 1. SIDEBAR (MENYU) -->
+<nav class="sidebar" id="sidebar">
+    <div class="d-flex justify-content-between align-items-center">
+        <!-- BREND NOMI O'ZGARTIRILDI -->
+        <div class="brand">
+            <i class="fas fa-tools text-warning"></i> BEK SANTEXNIKA
+        </div>
+        <i class="fas fa-times d-md-none text-white fs-4" onclick="toggleMenu()" style="cursor: pointer;"></i>
+    </div>
+
+    <div class="mt-2">
+        <!-- Rangi yorqinroq (#adb5bd) qilindi -->
+        <small class="fw-bold ps-3" style="font-size: 11px; letter-spacing: 1px; color: #adb5bd;">ASOSIY MENU</small>
+
+        <div class="mt-2">
+            <a href="/" class="nav-link {{ 'active' if request.path == '/' }}">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+            <a href="/inventory" class="nav-link {{ 'active' if request.path == '/inventory' }}">
+                <i class="fas fa-box"></i> Mahsulotlar
+            </a>
+            <a href="/pos" class="nav-link {{ 'active' if request.path == '/pos' }}">
+                <i class="fas fa-cash-register"></i> Kassa
+            </a>
+            <a href="/debts" class="nav-link {{ 'active' if request.path == '/debts' }}">
+                <i class="fas fa-users"></i> Nasiyalar
+            </a>
+
+            <!-- YANGI QO'SHILGAN (Qizil rangda) -->
+            <a href="/my_debts" class="nav-link {{ 'active' if request.path == '/my_debts' }}" style="color: #fca5a5;">
+                <i class="fas fa-building"></i> Mening Qarzlarim
+            </a>
+            <a href="/archive" class="nav-link {{ 'active' if request.path == '/archive' }}">
+                <i class="fas fa-history"></i> Arxiv & Tarix
+            </a>
+        </div>
+    </div>
+
+    <div style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+        <a href="/logout" class="nav-link text-danger fw-bold">
+            <i class="fas fa-sign-out-alt"></i> Tizimdan Chiqish
+        </a>
+    </div>
+</nav>
+
+<!-- 2. ASOSIY EKRAN -->
+<div class="main-content">
+
+    <!-- MOBIL HEADER (Faqat telefonda ko'rinadi) -->
+    <div class="mobile-header">
+        <div class="d-flex align-items-center gap-3">
+            <i class="fas fa-bars fs-4" onclick="toggleMenu()"></i>
+            <!-- MOBIL UCHUN NOM -->
+            <h5 class="m-0 fw-bold">BEK SANTEXNIKA</h5>
+        </div>
+        <a href="/logout" class="text-danger"><i class="fas fa-sign-out-alt fs-4"></i></a>
+    </div>
+
+    <!-- DESKTOP HEADER (Faqat kompyuterda ko'rinadi) -->
+    <div class="desktop-header d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <!-- O'zgaruvchan Sarlavha -->
+            <h3 class="fw-bold m-0 text-dark">
+                {% block title %} Boshqaruv Paneli {% endblock %}
+            </h3>
+            <p class="text-muted m-0 small">Bugungi statistika va holat</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-4">
+            <!-- Soat -->
+            <div class="text-end lh-1">
+                <span class="d-block fw-bold fs-5 text-dark" id="clock-time">--:--</span>
+                <span class="d-block text-muted small" id="clock-date">-- ---, 2025</span>
+            </div>
+
+            <!-- FOYDALANUVCHI MENYUSI (DROPDOWN) -->
+            <div class="dropdown">
+                <div class="header-dropdown bg-white px-3 py-2 rounded-pill shadow-sm d-flex align-items-center gap-3 dropdown-toggle"
+                     data-bs-toggle="dropdown" aria-expanded="false">
+
+                    <div class="user-avatar">
+                        {{ session.get('username', 'A')[0].upper() }}
+                    </div>
+
+                    <div class="text-start pe-2">
+                        <span class="d-block fw-bold text-dark small">
+                            {{ session.get('username', 'Admin') }}
+                        </span>
+                        <span class="d-block text-success small" style="font-size: 10px;">• Online</span>
+                    </div>
+                </div>
+
+                <!-- Ochiladigan Oyna -->
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-3 mt-2" style="width: 260px; border-radius: 12px;">
+                    <li class="mb-3 border-bottom pb-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; font-size: 20px;">
+                                {{ session.get('username', 'A')[0].upper() }}
+                            </div>
+                            <div>
+                                <h6 class="m-0 fw-bold text-dark">{{ session.get('username', 'Admin') }}</h6>
+                                <small class="text-muted">Administrator</small>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="mb-2">
+                        <div class="alert alert-light border p-2 d-flex align-items-center gap-2 m-0">
+                            <i class="far fa-clock text-warning fs-5"></i>
+                            <div style="line-height: 1.2;">
+                                <small class="text-muted d-block" style="font-size: 10px;">Kirgan vaqti:</small>
+                                <strong class="text-dark small">{{ session.get('login_time', 'Hozir') }}</strong>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item text-danger fw-bold bg-danger bg-opacity-10 rounded d-flex justify-content-center align-items-center gap-2 py-2 mt-2" href="/logout">
+                            <i class="fas fa-power-off"></i> Chiqish
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <!-- DROPDOWN TUGADI -->
+
+        </div>
+    </div>
+
+    <!-- SAHIFALAR KONTEYNERI -->
+    {% block content %}{% endblock %}
+
+</div>
+
+<!-- KERAKLI SKRIPTLAR -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Mobil menyuni ochish
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('show');
+    }
+
+    // Soatni yurgizish
+    function updateClock() {
+        const now = new Date();
+        const months = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr"];
+
+        document.getElementById('clock-time').innerText = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        document.getElementById('clock-date').innerText = now.getDate() + " " + months[now.getMonth()] + ", " + now.getFullYear();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+
+</body>
+</html>

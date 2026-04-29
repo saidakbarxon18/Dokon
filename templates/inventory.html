@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% block title %} Mahsulotlar Ombori {% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <!-- QIDIRUV (SEARCH) -->
+        <div class="card-custom p-2 d-flex align-items-center shadow-sm">
+            <i class="fas fa-search text-muted ms-3"></i>
+            <input type="text" id="productSearch" class="form-control border-0 shadow-none" placeholder="Mahsulot nomini yozing (Masalan: Kran)...">
+        </div>
+    </div>
+    <div class="col-md-4 mt-3 mt-md-0">
+        <button class="btn btn-success w-100 h-100 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+                data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="fas fa-box-open"></i> Yangi Mahsulot
+        </button>
+    </div>
+</div>
+
+<!-- JADVAL -->
+<div class="card-custom p-0 overflow-hidden shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-uppercase small text-muted">
+                <tr>
+                    <th class="ps-4">Rasm</th>
+                    <th>Nomi</th>
+                    <th>Kategoriya</th>
+                    <th>Kelgan</th>
+                    <th>Sotuv</th>
+                    <th>Qoldiq</th>
+                    <th class="pe-4 text-end">Amal</th>
+                </tr>
+            </thead>
+            <tbody id="inventoryTable">
+                {% for p in products %}
+                <tr class="product-row">
+                    <!-- 1. Rasm -->
+                    <td class="ps-4">
+                        {% if p.image %}
+                        <img src="/static/uploads/{{ p.image }}" width="45" height="45" loading="lazy" style="border-radius: 8px; object-fit: cover; border: 1px solid #eee;">
+                        {% else %}
+                        <div style="width:45px; height:45px; background:#f3f4f6; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#9ca3af;">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        {% endif %}
+                    </td>
+
+                    <!-- 2. Nomi -->
+                    <td class="fw-bold text-dark search-name">{{ p.name }}</td>
+
+                    <!-- 3. Kategoriya -->
+                    <td><span class="badge bg-light text-dark border">{{ p.category }}</span></td>
+
+                    <!-- 4. KELGAN NARX -->
+                    <td class="text-muted small">
+                        {% if p.currency == 'USD' %}
+                            $ {{ "{:,.2f}".format(p.buy_price) }}
+                        {% else %}
+                            {{ "{:,.0f}".format(p.buy_price) }}
+                        {% endif %}
+                    </td>
+
+                    <!-- 5. SOTUV NARX -->
+                    <td class="fw-bold text-success">
+                        {% if p.currency == 'USD' %}
+                            $ {{ "{:,.2f}".format(p.sell_price) }}
+                        {% else %}
+                            {{ "{:,.0f}".format(p.sell_price) }}
+                        {% endif %}
+                    </td>
+
+                    <!-- 6. Qoldiq -->
+                    <td>
+                        <span class="badge {% if p.quantity < 5 %}bg-danger{% else %}bg-success{% endif %} bg-opacity-10 text-dark px-2 py-1 border">
+                            {{ p.quantity }}
+                        </span>
+                    </td>
+
+                    <!-- 7. AMALLAR -->
+                    <td class="pe-4 text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                            <!-- Qo'shish (Kirim) -->
+                            <button class="btn btn-sm btn-primary px-3 shadow-sm" onclick="openStockModal('{{ p.id }}', '{{ p.name }}')" title="Kirim qilish">
+                                <i class="fas fa-plus"></i>
+                            </button>
+
+                            <!-- O'chirish -->
+                            <form method="POST" onsubmit="return confirm('Rostdan ham o\'chirasizmi?');">
+                                <input type="hidden" name="delete_product" value="1">
+                                <input type="hidden" name="id" value="{{ p.id }}">
+                                <input type="hidden" name="product_name" value="{{ p.name }}">
+                                <button class="btn btn-sm btn-outline-danger px-3 shadow-sm" title="O'chirish">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr id="noDataRow">
+                    <td colspan="7" class="text-center py-5 text-muted">Ombor bo'sh</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 1. YANGI MAHSULOT QO'SHISH (MODAL) -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form class="modal-content border-0 shadow" method="POST" enctype="multipart/form-data">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Yangi Mahsulot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted">NOMI</label>
+                    <input type="text" name="name" class="form-control" placeholder="Masalan: Vanna krani" required>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted">KATEGORIYA</label>
+                    <input type="text" name="category" class="form-control" placeholder="Masalan: Santexnika">
+                </div>
+
+                <!-- NARX VA VALYUTA (MUHIM QISM) -->
+                <label class="small fw-bold text-muted">NARXLAR (KELGAN / SOTUV)</label>
+                <div class="input-group mb-3">
+                    <input type="number" step="0.01" name="buy_price" class="form-control" placeholder="Kelgan" required>
+                    <input type="number" step="0.01" name="sell_price" class="form-control fw-bold text-success" placeholder="Sotuv" required>
+
+                    <select name="currency" class="form-select bg-light fw-bold" style="max-width: 100px;">
+                        <option value="UZS" selected>SO'M</option>
+                        <option value="USD">$ USD</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted">SONI</label>
+                    <input type="number" name="quantity" class="form-control" placeholder="0" required>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-muted">RASM</label>
+                    <input type="file" name="image" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4">
+                <button type="submit" class="btn btn-success w-100 py-2 fw-bold">Saqlash</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. KIRIM QILISH (MODAL) -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <form class="modal-content border-0 shadow" method="POST">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title fw-bold"><i class="fas fa-layer-group me-2"></i>Kirim Qilish</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <input type="hidden" name="add_stock" value="1">
+                <input type="hidden" name="id" id="stock_id">
+                <input type="hidden" name="product_name" id="stock_name_hidden">
+                <p class="text-muted mb-1 small">Tanlangan mahsulot:</p>
+                <h5 class="fw-bold text-dark mb-3" id="stock_name_display">...</h5>
+                <div class="form-floating text-dark">
+                    <input type="number" name="added_qty" class="form-control text-center fw-bold fs-4 text-primary" id="floatingQty" placeholder="0" required autofocus>
+                    <label for="floatingQty">Nechta qo'shildi?</label>
+                </div>
+            </div>
+            <div class="modal-footer p-2 border-0">
+                <button type="submit" class="btn btn-primary w-100">Tasdiqlash</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Live Search
+    document.getElementById('productSearch').addEventListener('keyup', function() {
+        let value = this.value.toLowerCase();
+        document.querySelectorAll('.product-row').forEach(row => {
+            let name = row.querySelector('.search-name').innerText.toLowerCase();
+            row.style.display = name.includes(value) ? '' : 'none';
+        });
+    });
+
+    // Kirim qilish modalini ochish
+    function openStockModal(id, name) {
+        document.getElementById('stock_id').value = id;
+        document.getElementById('stock_name_hidden').value = name;
+        document.getElementById('stock_name_display').innerText = name;
+        var myModal = new bootstrap.Modal(document.getElementById('stockModal'));
+        myModal.show();
+    }
+</script>
+{% endblock %}

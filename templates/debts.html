@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %} Nasiyalar Daftari {% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card-custom p-2 d-flex align-items-center shadow-sm">
+            <i class="fas fa-search text-muted ms-3"></i>
+            <input type="text" id="searchInput" class="form-control border-0 shadow-none" placeholder="Mijoz ismi yoki telefon raqami orqali qidirish...">
+        </div>
+    </div>
+    <div class="col-md-4 mt-3 mt-md-0">
+        <button class="btn btn-success w-100 h-100 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+                data-bs-toggle="modal" data-bs-target="#debtModal">
+            <i class="fas fa-user-plus"></i> Yangi Nasiya
+        </button>
+    </div>
+</div>
+
+<div class="card-custom p-0 overflow-hidden shadow-sm">
+    <div class="table-responsive" style="max-height: 700px;">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light text-uppercase small text-muted sticky-top">
+                <tr>
+                    <th class="ps-4">Mijoz Ismi</th>
+                    <th>Olingan Vaqti</th> <!-- YANGI USTUN -->
+                    <th>Aloqa</th>
+                    <th>Qarz Miqdori</th>
+                    <th>Muddat</th>
+                    <th class="text-end pe-4">Amallar</th>
+                </tr>
+            </thead>
+            <tbody id="debtsTableBody">
+                {% for d in debts %}
+                <tr class="debt-row">
+                    <td class="ps-4">
+                        <h6 class="m-0 fw-bold text-dark customer-name">{{ d.customer }}</h6>
+                        {% if d.note %}
+                        <small class="text-muted d-block" style="font-size: 11px;">({{ d.note }})</small>
+                        {% endif %}
+                    </td>
+
+                    <!-- OLINGAN VAQTI (YANGI) -->
+                    <td>
+                        <span class="badge bg-light text-dark border fw-normal">
+                            <i class="far fa-clock me-1"></i> {{ d.date_added if d.date_added else 'Eski' }}
+                        </span>
+                    </td>
+
+                    <td class="customer-phone">
+                        <a href="tel:{{ d.phone }}" class="text-decoration-none fw-bold text-secondary" style="font-size: 14px;">
+                            {{ d.phone }}
+                        </a>
+                    </td>
+
+                    <td>
+                        <span class="text-danger fw-bold" style="font-size: 15px;">
+                            {% if d.currency == 'USD' %}
+                                $ {{ "{:,.2f}".format(d.amount | float) }}
+                            {% else %}
+                                {{ "{:,.0f}".format(d.amount | float) }} so'm
+                            {% endif %}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="badge {{ d.due_date | date_color }} border px-3 py-2 fw-normal shadow-sm"
+                              style="font-size: 12px; border-radius: 6px;">
+                            <i class="far fa-calendar-alt me-1"></i> {{ d.due_date }}
+                        </span>
+                    </td>
+
+                    <td class="text-end pe-4">
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="pay" value="1"><input type="hidden" name="id" value="{{ d.id }}">
+                            <button class="btn btn-sm btn-light border text-success shadow-sm mx-1" title="To'landi">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </form>
+                        <form method="POST" style="display:inline;" onsubmit="return confirm('O\'chirishni xohlaysizmi?');">
+                            <input type="hidden" name="delete" value="1"><input type="hidden" name="id" value="{{ d.id }}">
+                            <button class="btn btn-sm btn-light border text-danger shadow-sm" title="O'chirish">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fas fa-check-circle fa-3x mb-3 text-light" style="color: #e0e0e0 !important;"></i>
+                        <p>Qarzdorliklar yo'q!</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="debtModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content border-0 shadow" method="POST" onsubmit="preventDouble(event)">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Yangi Nasiya</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="text" name="customer" class="form-control form-control-lg bg-light border-0 mb-3" placeholder="Mijoz ismi" required>
+                <div class="row mb-3">
+                    <div class="col-7">
+                        <input type="text" name="phone" class="form-control bg-light border-0 py-3" placeholder="+998" value="+998">
+                    </div>
+                    <div class="col-5">
+                        <input type="date" name="date" class="form-control bg-light border-0 py-3" required>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="number" step="0.01" name="amount" class="form-control form-control-lg fw-bold text-dark" placeholder="Summa" required>
+                    <select name="currency" class="form-select bg-light fw-bold" style="max-width: 100px;">
+                        <option value="UZS" selected>SO'M</option>
+                        <option value="USD">$ USD</option>
+                    </select>
+                </div>
+                <textarea name="note" class="form-control bg-light border-0" placeholder="Izoh..."></textarea>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="submit" id="saveBtn" class="btn btn-success w-100 py-3 fw-bold fs-5">Saqlash</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let val = this.value.toLowerCase();
+        document.querySelectorAll('.debt-row').forEach(row => {
+            let name = row.querySelector('.customer-name').innerText.toLowerCase();
+            let phone = row.querySelector('.customer-phone').innerText.toLowerCase();
+            row.style.display = (name.includes(val) || phone.includes(val)) ? '' : 'none';
+        });
+    });
+
+    function preventDouble(event) {
+        let btn = document.getElementById('saveBtn');
+        if (btn.getAttribute('data-clicked') === 'true') { event.preventDefault(); return false; }
+        btn.setAttribute('data-clicked', 'true');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saqlanmoqda...';
+        btn.style.opacity = '0.7';
+    }
+</script>
+{% endblock %}
