@@ -1,0 +1,146 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Inventar - Dokon{% endblock %}
+{% block page_title %}📦 Inventar Boshqaruvi{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+        <i class="fas fa-plus"></i> Yangi Mahsulot Qo'sh
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Mahsulot Nomi</th>
+                <th>Kategoriya</th>
+                <th>Miqdori</th>
+                <th>Sotib Olish Narxi</th>
+                <th>Sotish Narxi</th>
+                <th>Valyuta</th>
+                <th>Amallar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.id }}</td>
+                <td>{{ product.name }}</td>
+                <td>{{ product.category }}</td>
+                <td>
+                    {% if product.quantity < 10 %}
+                        <span class="badge bg-danger">{{ product.quantity }}</span>
+                    {% elif product.quantity < 20 %}
+                        <span class="badge bg-warning">{{ product.quantity }}</span>
+                    {% else %}
+                        <span class="badge bg-success">{{ product.quantity }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ product.buy_price|floatformat:0 }}</td>
+                <td>{{ product.sell_price|floatformat:0 }}</td>
+                <td>{{ product.currency }}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#addStockModal{{ product.id }}">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="if(confirm('O\'chirishni tasdiqlaysizmi?')) document.getElementById('deleteForm{{ product.id }}').submit();">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <form id="deleteForm{{ product.id }}" method="POST" style="display:none;">
+                        {% csrf_token %}
+                        <input type="hidden" name="id" value="{{ product.id }}">
+                        <input type="hidden" name="delete_product">
+                    </form>
+                </td>
+            </tr>
+
+            <!-- Add Stock Modal -->
+            <div class="modal fade" id="addStockModal{{ product.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                                <h5 class="modal-title">Kirim qo'shish - {{ product.name }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Qo'shiladigan Miqdori:</label>
+                                    <input type="number" class="form-control" name="added_qty" min="1" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor</button>
+                                <input type="hidden" name="id" value="{{ product.id }}">
+                                <input type="hidden" name="add_stock">
+                                <button type="submit" class="btn btn-primary">Qo'shish</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">Mahsulotlar yo'q. Yangi mahsulot qo'shish uchun tugmani bosing.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Yangi Mahsulot Qo'shish</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Mahsulot Nomi:</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategoriya:</label>
+                        <input type="text" class="form-control" name="category" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sotib Olish Narxi:</label>
+                        <input type="number" class="form-control" name="buy_price" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sotish Narxi:</label>
+                        <input type="number" class="form-control" name="sell_price" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valyuta:</label>
+                        <select class="form-select" name="currency">
+                            <option value="UZS">So'm (UZS)</option>
+                            <option value="USD">Dollar (USD)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Miqdori:</label>
+                        <input type="number" class="form-control" name="quantity" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rasm (ixtiyoriy):</label>
+                        <input type="file" class="form-control" name="image" accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor</button>
+                    <button type="submit" class="btn btn-primary">Qo'shish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

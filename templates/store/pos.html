@@ -1,0 +1,125 @@
+{% extends 'store/base.html' %}
+
+{% block title %}POS - Dokon{% endblock %}
+{% block page_title %}💳 POS Savdo Sistemasi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h5>Mahsulotlarni Tanlang</h5>
+        <div class="row" id="productsContainer">
+            {% for product in products %}
+            <div class="col-md-4 mb-3">
+                <div class="card" onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.sell_price }})" style="cursor: pointer; transition: transform 0.2s;">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ product.name }}</h6>
+                        <p class="card-text">
+                            <small class="text-muted">Narxi:</small> <strong>{{ product.sell_price }} {{ product.currency }}</strong>
+                        </p>
+                        <small class="text-success">Mavjud: {{ product.quantity }}</small>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center text-muted">
+                Sotish uchun mahsulotlar yo'q
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <h5>🛒 Savat</h5>
+        <div class="card">
+            <div class="card-body">
+                <div id="cartItems" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                    <p class="text-muted text-center">Savat bo'sh</p>
+                </div>
+                <hr>
+                <h5>Jami: <span id="totalPrice">0</span> UZS</h5>
+                <button class="btn btn-success w-100" onclick="checkout()">
+                    <i class="fas fa-check"></i> Sotuvni Yakunlash
+                </button>
+                <button class="btn btn-danger w-100 mt-2" onclick="clearCart()">
+                    <i class="fas fa-trash"></i> Savatni Tozalash
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let cart = [];
+
+    function addToCart(id, name, price) {
+        let item = cart.find(i => i.id === id);
+        if (item) {
+            item.qty++;
+        } else {
+            cart.push({id, name, price, qty: 1});
+        }
+        updateCart();
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(i => i.id !== id);
+        updateCart();
+    }
+
+    function updateQuantity(id, qty) {
+        let item = cart.find(i => i.id === id);
+        if (item) item.qty = Math.max(1, qty);
+        updateCart();
+    }
+
+    function updateCart() {
+        let html = '';
+        let total = 0;
+        cart.forEach(item => {
+            let subtotal = item.price * item.qty;
+            total += subtotal;
+            html += `
+                <div class="mb-2 p-2 border-bottom">
+                    <strong>${item.name}</strong><br>
+                    <small>${item.price} x <input type="number" value="${item.qty}" min="1" style="width: 40px;" onchange="updateQuantity(${item.id}, this.value)"></small><br>
+                    <small class="text-muted">Jami: ${subtotal}</small>
+                    <button class="btn btn-sm btn-danger float-end" onclick="removeFromCart(${item.id})">X</button>
+                </div>
+            `;
+        });
+        document.getElementById('cartItems').innerHTML = html || '<p class="text-muted text-center">Savat bo\'sh</p>';
+        document.getElementById('totalPrice').textContent = total.toLocaleString();
+    }
+
+    function clearCart() {
+        if (confirm('Savatni tozalashni tasdiqlaysizmi?')) {
+            cart = [];
+            updateCart();
+        }
+    }
+
+    function checkout() {
+        if (cart.length === 0) {
+            alert('Savat bo\'sh!');
+            return;
+        }
+
+        fetch('{% url "store:sell_api" %}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: JSON.stringify({cart})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                cart = [];
+                updateCart();
+                location.reload();
+            } else {
+                alert('Xato: ' + data.message);
+            }
+        })
+        .catch(e => alert('Xato: ' + e));
+    }
+</script>
+{% endblock %}

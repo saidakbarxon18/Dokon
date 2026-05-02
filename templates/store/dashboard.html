@@ -1,0 +1,111 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Dashboard - Dokon{% endblock %}
+{% block page_title %}📊 Dashboard - Bosh Sahifa{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card-stat">
+            <div class="label">💵 Sotish (UZS)</div>
+            <div class="value">{{ sales_uzs|floatformat:0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card-stat" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="label">💵 Sotish (USD)</div>
+            <div class="value">{{ sales_usd|floatformat:0 }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card-stat" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="label">📦 Mahsulotlar</div>
+            <div class="value">{{ products_count }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card-stat" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            <div class="label">⚠️ Kam Miqdor</div>
+            <div class="value">{{ low_stock }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <h5>💹 Foyda Statistikasi</h5>
+        <div class="card">
+            <div class="card-body">
+                <p><strong>UZS:</strong> {{ profit_uzs|floatformat:0 }} So'm</p>
+                <p><strong>USD:</strong> {{ profit_usd|floatformat:0 }} Dollar</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <h5>💳 Qarz Statistikasi</h5>
+        <div class="card">
+            <div class="card-body">
+                <p><strong>Mijozlar (UZS):</strong> {{ debts_uzs|floatformat:0 }} So'm</p>
+                <p><strong>Mijozlar (USD):</strong> {{ debts_usd|floatformat:0 }} Dollar</p>
+                <p><strong>Taminotchilar (UZS):</strong> {{ my_debts_uzs|floatformat:0 }} So'm</p>
+                <p><strong>Taminotchilar (USD):</strong> {{ my_debts_usd|floatformat:0 }} Dollar</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <h5>📝 So'nggi Savdolar</h5>
+        <table class="table table-sm table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Mahsulot</th>
+                    <th>Miqdori</th>
+                    <th>Narxi</th>
+                    <th>Vaqti</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in recent_sales %}
+                <tr>
+                    <td>{{ sale.product.name }}</td>
+                    <td>{{ sale.quantity }}</td>
+                    <td>{{ sale.total_price }} {{ sale.currency }}</td>
+                    <td>{{ sale.date_sold|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Savdo yo'q</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-6">
+        <h5>🕐 So'nggi Amallar</h5>
+        <table class="table table-sm table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Amal</th>
+                    <th>Batafsil</th>
+                    <th>Vaqti</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in recent_activities %}
+                <tr>
+                    <td>{{ activity.action }}</td>
+                    <td>{{ activity.details }}</td>
+                    <td>{{ activity.date_time|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">Amallar yo'q</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

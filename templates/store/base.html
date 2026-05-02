@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dokon Boshqaruv Sistemasi{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .sidebar {
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            padding: 20px;
+            overflow-y: auto;
+            color: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #3498db;
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 15px;
+        }
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: #3498db;
+            color: white;
+            transform: translateX(5px);
+        }
+        .sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            background: #ecf0f1;
+            min-height: 100vh;
+        }
+        .navbar-top {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .navbar-top .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .navbar-top .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .content-wrapper {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-custom {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            background: linear-gradient(135deg, #2980b9, #1f618d);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .card-stat {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .card-stat .value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .card-stat .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">🏪 Dokon</div>
+        <nav>
+            <a href="{% url 'store:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="{% url 'store:inventory' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory' %}active{% endif %}">
+                <i class="fas fa-boxes"></i> Inventar
+            </a>
+            <a href="{% url 'store:pos' %}" class="nav-link {% if request.resolver_match.url_name == 'pos' %}active{% endif %}">
+                <i class="fas fa-cash-register"></i> POS
+            </a>
+            <a href="{% url 'store:debts' %}" class="nav-link {% if request.resolver_match.url_name == 'debts' %}active{% endif %}">
+                <i class="fas fa-money-bill"></i> Mijoz Qarzi
+            </a>
+            <a href="{% url 'store:my_debts' %}" class="nav-link {% if request.resolver_match.url_name == 'my_debts' %}active{% endif %}">
+                <i class="fas fa-hand-holding-usd"></i> Bizning Qarz
+            </a>
+            <a href="{% url 'store:archive' %}" class="nav-link {% if request.resolver_match.url_name == 'archive' %}active{% endif %}">
+                <i class="fas fa-archive"></i> Arxiv
+            </a>
+            <hr style="border-top: 1px solid #555;">
+            <a href="{% url 'store:logout' %}" class="nav-link" style="color: #e74c3c;">
+                <i class="fas fa-sign-out-alt"></i> Chiqish
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="navbar-top">
+            <h3 style="margin: 0;">{% block page_title %}Dokon Boshqaruv Sistemasi{% endblock %}</h3>
+            <div class="user-info">
+                <span>👤 {{ request.session.username }}</span>
+                <div class="user-avatar">{{ request.session.username|first }}</div>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
